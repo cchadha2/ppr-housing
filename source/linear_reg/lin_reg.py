@@ -32,12 +32,9 @@ clf.fit(
     y_train,
 )
 
-print('Coefficients: \n', clf.coef_)
-
 print("Predicting")
 print("__________")
 test_preds = clf.predict(X_test)
 
-print(math.sqrt(mean_squared_error(y_test.values, test_preds)))
-
-print(np.exp(clf.predict(np.array([[0,0,1,0,0,1,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]))))
+print('RMSE: {}'.format(math.sqrt(mean_squared_error(y_test.values, test_preds))))
+print('Price of my house: €{:.2f}'.format(np.asscalar(np.exp(clf.predict(np.array([[0,0,1,0,0,1,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]))))))
