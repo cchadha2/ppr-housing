@@ -13,12 +13,8 @@ logger.addHandler(ch)
 tqdm.pandas()
 
 # Google API
-# url='https://maps.googleapis.com/maps/api/geocode/json?address='
-# api_key=''
-
-# OpenStreetMap API
-url =  'https://nominatim.openstreetmap.org/search?q='
-api_key = '&format=json'
+url='https://maps.googleapis.com/maps/api/geocode/json?address='
+api_key=''
 
 def url_creator(address, url=url, api_key=api_key):
     logger.debug('Creating API request URL')
@@ -32,26 +28,20 @@ def lat_lng(api_url):
     logger.debug('Requesting geocodes from Google API')
     try:
         response = requests.get(api_url)
-    except requests.exceptions.RequestException as e:
+        response.raise_for_status()
+    except requests.exceptions.HTTPError as e:
         logger.error(e)
-        raise
-    response.raise_for_status()
-    # Google API
-    # results = response.json()['results']
-    # OpenStreetMap API
-    logger.info(response.status_code)
-    if len(response.json()) != 0:
+
+    results = response.json()['results']
+    if len(results) != 0:
         logger.debug('Found geospatial coordinates')
-        # Google API
-        # return results[0]['geometry']['location']['lat'], results[0]['geometry']['location']['lng']
-        # OpenStreetMap API
-        return response.json()[0]['lat'], response.json()[0]['lon']
+        return results[0]['geometry']['location']['lat'], results[0]['geometry']['location']['lng']
     else:
         logger.debug('Could not find geospatial coordinates')
         return np.nan, np.nan
 
 def main():
-    df = pd.read_csv('output/processed_ppr.csv', encoding='latin-1')
+    df = pd.read_csv('output/processed_ppr_cat.csv', encoding='latin-1')
 
     logger.info('Creating API request URLs for property price registry')
     df['api_url']=df['Address'].apply(url_creator)
@@ -60,6 +50,7 @@ def main():
 
     logger.info('Saving dataframe to CSV')
     df.to_csv('geocodes.csv', index=False)
+
 
 if __name__ == '__main__':
     main()

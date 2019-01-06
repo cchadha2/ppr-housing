@@ -35,7 +35,7 @@ def num_preprocessing(df):
                   'Not Full Market Price', 'Postal Code'], axis=1)
                   
     # Without geocoding:
-    df = df.drop('Address', axis=1)
+    # df = df.drop('Address', axis=1)
     
     logger.debug('Processed dataframe')
     return df
@@ -63,7 +63,7 @@ def cat_preprocessing(df):
     df['Property Size Description'][df['Property Size Description'].isna()] = 'None'
     
     # Without geocoding:
-    df = df.drop('Address', axis=1)
+    # df = df.drop('Address', axis=1)
     
     logger.debug('Processed dataframe')
     return df
