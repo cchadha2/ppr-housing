@@ -16,6 +16,12 @@ tqdm.pandas()
 url='https://maps.googleapis.com/maps/api/geocode/json?address='
 api_key=''
 
+# TODO: Create a GeocodingAPI class
+# class GeocodingAPI:
+#
+#     def __init__(self, url='https://maps.googleapis.com/maps/api/geocode/json?address=', api_key):
+
+
 def url_creator(address, url=url, api_key=api_key):
     logger.debug('Creating API request URL')
     add_list = address.split()
@@ -23,6 +29,7 @@ def url_creator(address, url=url, api_key=api_key):
     add_list.append(address.split()[-1])
     add_url="".join(add_list)
     return url+add_url+api_key
+
 
 def lat_lng(api_url):
     logger.debug('Requesting geocodes from Google API')
