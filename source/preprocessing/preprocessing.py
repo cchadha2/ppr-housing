@@ -1,6 +1,8 @@
 import pandas as pd 
 import logging
 
+from source.preprocessing.geocoding import Geocoding
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 ch = logging.StreamHandler()
@@ -10,12 +12,13 @@ logger.addHandler(ch)
 
 class PreprocessingPPR:
 
-    def __init__(self, df, geocoding=True):
+    def __init__(self, df, api_key, geocoding=True):
         self.df = df
         self.df = self._remove_unnecessary_rows(self.df)
         self.df = self._time_subset(self.df)
         self.df = self._parse_price(self.df)
 
+        self.api_key = api_key
         self.geocoding = geocoding
 
 
@@ -45,31 +48,29 @@ class PreprocessingPPR:
         return df
 
     @staticmethod
-    def _one_hot_encode(df):
-        # One-hot encode categorical variables.
-        df = pd.concat([df, pd.get_dummies(df[['Property Size Description',
-                                               'Description of Property',
-                                               'VAT Exclusive',
-                                               'Not Full Market Price',
-                                               'County',
-                                               'Postal Code']])], axis=1)
-        df = df.drop(['County',
-                      'Date of Sale',
-                      'Property Size Description',
-                      'Description of Property',
-                      'VAT Exclusive',
-                      'Not Full Market Price',
-                      'Postal Code'], axis=1)
-        return df
-
-    @staticmethod
     def _no_geocoding(df):
         return df.drop('Address', axis=1)
 
     def num_preprocessing(self):
-        self.df = self._one_hot_encode(self.df)
+        # One-hot encode categorical variables.
+        self.df = pd.concat([self.df, pd.get_dummies(self.df[['Property Size Description',
+                                                              'Description of Property',
+                                                              'VAT Exclusive',
+                                                              'Not Full Market Price',
+                                                              'County',
+                                                              'Postal Code']])], axis=1)
+        self.df = self.df.drop(['County',
+                                'Date of Sale',
+                                'Property Size Description',
+                                'Description of Property',
+                                'VAT Exclusive',
+                                'Not Full Market Price',
+                                'Postal Code'], axis=1)
 
-        if self.geocoding is False:
+        if self.geocoding is True:
+            self.df['coordinates'] = self.df['Address'].progress_apply(
+                lambda x: Geocoding(x, api_key=api_key).lat_lng())
+        else:
             self.df = self._no_geocoding(self.df)
 
         return self.df
@@ -82,7 +83,10 @@ class PreprocessingPPR:
         self.df['Postal Code'][self.df['Postal Code'].isna()] = 'None'
         self.df['Property Size Description'][self.df['Property Size Description'].isna()] = 'None'
 
-        if self.geocoding is False:
+        if self.geocoding is True:
+            self.df['coordinates'] = self.df['Address'].progress_apply(
+                lambda x: Geocoding(x, self.api_key).lat_lng())
+        else:
             self.df = self._no_geocoding(self.df)
 
         return self.df
@@ -96,12 +100,12 @@ def main():
         logger.error(e)
         raise
 
-    preprocess = PreprocessingPPR(df)
+    preprocess = PreprocessingPPR(df, '[api-key]', False)
     processed_df = preprocess.cat_preprocessing()
 
     logger.info('Saving dataframe to CSV')
     try:
-        processed_df.to_csv('output/processed_ppr_cat.csv', encoding='latin-1')
+        processed_df.to_csv('output/processed_ppr.csv', encoding='latin-1')
     except OSError as e:
         logger.error(e)
         raise

@@ -38,28 +38,3 @@ class Geocoding:
         else:
             logger.debug('Could not find geospatial coordinates')
             return np.nan, np.nan
-
-
-def main():
-
-    api_key = ''
-
-    try:
-        df = pd.read_csv('output/processed_ppr_cat_2018.csv', encoding='latin-1')
-    except OSError as e:
-        logger.error(e)
-        raise
-
-    logger.info('Requesting geocodes from Google API')
-    df['coordinates'] = df['Address'].progress_apply(lambda x: Geocoding(x, api_key=api_key).lat_lng())
-
-    logger.info('Saving dataframe to CSV')
-    try:
-        df.to_csv('output/geocodes_2018.csv', index=False)
-    except OSError as e:
-        logger.error(e)
-        raise
-
-
-if __name__ == '__main__':
-    main()
