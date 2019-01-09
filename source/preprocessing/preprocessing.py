@@ -1,13 +1,13 @@
-import pandas as pd 
 import logging
 from tqdm import tqdm
+import pandas as pd
 
-from source.preprocessing.geocoding import Geocoding
+from source.preprocessing.geocoding import url_creator, lat_lng
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+ch.setLevel(logging.DEBUG)
 logger.addHandler(ch)
 
 tqdm.pandas()
@@ -17,15 +17,15 @@ class PreprocessingPPR:
 
     def __init__(self, df, api_key, geocoding=True):
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
+        self.logger.setLevel(logging.DEBUG)
 
         self.df = df
         self.df = self._remove_unnecessary_rows(self.df)
         self.df = self._time_subset(self.df)
         self.df = self._parse_price(self.df)
 
-        self.api_key = api_key
         self.geocoding = geocoding
+        self.api_key = api_key
 
 
     @staticmethod
@@ -44,8 +44,7 @@ class PreprocessingPPR:
                                                          dayfirst=True,
                                                          format='%d/%m/%Y')
         df = df.rename(columns={'Date of Sale (dd/mm/yyyy)': 'Date of Sale', 'Price ()': 'Price'})
-        df = df[(df['Date of Sale'] > '2017-01-01') & (
-                 df['Date of Sale'] < '2018-01-01')].reset_index(drop=True)
+        df = df[(df['Date of Sale'] > '2018-01-01')].reset_index(drop=True)
         return df
 
     @staticmethod
@@ -60,21 +59,20 @@ class PreprocessingPPR:
         return df.drop('Address', axis=1)
 
     def _geocoding(self, df):
-        df['coordinates'] = df['Address'].progress_apply(lambda x: Geocoding(x, api_key=self.api_key).lat_lng())
-        coordinates = df['coordinates'].apply(lambda x: x.lstrip('(').rstrip(')').split(', '))
+        address_list = df['Address'].tolist()
+        url_list = [url_creator(address, api_key=self.api_key) for address in address_list]
+        coordinates = [lat_lng(url) for url in url_list]
         df['lat'] = [x[0] for x in coordinates]
         df['lng'] = [x[1] for x in coordinates]
-        df = df.drop('coordinates', axis=1)
         return df
 
     def num_processing(self):
         self.logger.info('One-hot encoding data')
         # One-hot encode categorical variables.
         self.df = pd.concat([self.df, pd.get_dummies(self.df[['Property Size Description', 'Description of Property',
-                                                              'VAT Exclusive', 'Not Full Market Price', 'County',
-                                                              'Postal Code']])], axis=1)
+                                                              'VAT Exclusive', 'County', 'Postal Code']])], axis=1)
         self.df = self.df.drop(['County', 'Date of Sale', 'Property Size Description', 'Description of Property',
-                                'VAT Exclusive', 'Not Full Market Price', 'Postal Code'], axis=1)
+                                'VAT Exclusive', 'Postal Code'], axis=1)
 
         if self.geocoding is True:
             self.logger.info('Geocoding addresses')
@@ -105,13 +103,13 @@ class PreprocessingPPR:
 def main():
     logger.info('Pre-processing data')
     try:
-        df = pd.read_csv('data/PPR-ALL.zip', encoding='latin-1', compression='zip')
+        df = pd.read_csv('data/PPR-ALL.zip', encoding='latin-1', compression='zip', nrows=10)
     except OSError as e:
         logger.error(e)
         raise
 
-    preprocessed_df_object = PreprocessingPPR(df, 'api-key')
-    processed_df = preprocessed_df_object.cat_processing()
+    preprocessing_object = PreprocessingPPR(df, 'api-key')
+    processed_df = preprocessing_object.cat_processing()
 
     logger.info('Saving DataFrame to CSV')
     try:

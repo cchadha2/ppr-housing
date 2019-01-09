@@ -8,7 +8,7 @@ import math
 from source.preprocessing.geocoding import Geocoding
 
 
-train_df = pd.read_csv('output/processed_ppr_cat.csv', dtype={'lat': object, 'lng': object}, keep_default_na=False)
+train_df = pd.read_csv('output/processed_ppr.csv', dtype={'lat': object, 'lng': object}, keep_default_na=False)
 SEED = 1001
 
 X = train_df.drop('Price', axis=1)
@@ -57,11 +57,6 @@ print('RMSE: {}'.format(math.sqrt(mean_squared_error(y_test.values, test_preds))
 
 house_lat, house_lng = Geocoding('Address', 'api-key').lat_lng()
 house_lat, house_lng = str(house_lat), str(house_lng)
-print('Price of my house: €{:.2f}'.format(np.asscalar(np.exp(clf.predict(np.array([['Dublin 15',
-                                                                                    'Dublin',
-                                                                                    'No',
-                                                                                    'Yes',
-                                                                                    'Second-Hand Dwelling house /Apartment',
-                                                                                    'greater than or equal to 38 sq metres and less than 125 sq metres',
-                                                                                    house_lat,
-                                                                                    house_lng]]))))))
+print('Price of my house: €{:.2f}'.format(np.asscalar(np.exp(clf.predict(
+       np.array([['Dublin 15', 'Dublin', 'No', 'Yes', 'Second-Hand Dwelling house /Apartment',
+                  'greater than or equal to 38 sq metres and less than 125 sq metres', house_lat, house_lng]]))))))
