@@ -2,7 +2,7 @@ import logging
 from tqdm import tqdm
 import pandas as pd
 
-from source.preprocessing.geocoding import url_creator, lat_lng
+from source.preprocessing.geocoding import lat_lng
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -44,7 +44,7 @@ class PreprocessingPPR:
                                                          dayfirst=True,
                                                          format='%d/%m/%Y')
         df = df.rename(columns={'Date of Sale (dd/mm/yyyy)': 'Date of Sale', 'Price ()': 'Price'})
-        df = df[(df['Date of Sale'] > '2018-01-01')].reset_index(drop=True)
+        # df = df[(df['Date of Sale'] > '2018-01-01')].reset_index(drop=True)
         return df
 
     @staticmethod
@@ -60,8 +60,7 @@ class PreprocessingPPR:
 
     def _geocoding(self, df):
         address_list = df['Address'].tolist()
-        url_list = [url_creator(address, api_key=self.api_key) for address in address_list]
-        coordinates = [lat_lng(url) for url in url_list]
+        coordinates = [lat_lng(address, api_key=self.api_key) for address in address_list]
         df['lat'] = [x[0] for x in coordinates]
         df['lng'] = [x[1] for x in coordinates]
         return df
@@ -103,7 +102,7 @@ class PreprocessingPPR:
 def main():
     logger.info('Pre-processing data')
     try:
-        df = pd.read_csv('data/PPR-ALL.zip', encoding='latin-1', compression='zip', nrows=10)
+        df = pd.read_csv('data/PPR-ALL.zip', encoding='latin-1', compression='zip', nrows=2)
     except OSError as e:
         logger.error(e)
         raise
