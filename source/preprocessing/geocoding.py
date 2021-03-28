@@ -8,8 +8,6 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.DEBUG)
 logger.addHandler(ch)
 
-#TODO: Turn this into a Python package
-
 
 def url_creator(address, url='https://maps.googleapis.com/maps/api/geocode/json?address=', api_key=''):
     logger.debug('Creating API request URL')
